@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 import pkg from "pg";
 import { z } from "zod";
 import connectPgSimple from "connect-pg-simple";
-
+import cors from "express";
 
 dotenv.config();
 
@@ -47,6 +47,13 @@ app.use(helmet({
     }
   },
   crossOriginEmbedderPolicy: false
+}));
+
+import cors from "cors";
+
+app.use(cors({
+  origin:      process.env.ALLOWED_ORIGIN,
+  credentials: true,               // allows cookies to be sent cross-origin
 }));
 
 app.use(cookieParser());
