@@ -1,0 +1,9 @@
+.title { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-3); }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); }
+.jobCard { display: flex; flex-direction: column; gap: var(--space-4); }
+.jobCard h2 { font-family: var(--font-display); font-size: var(--text-base); }
+.jobCard p { font-size: var(--text-sm); color: var(--color-text-muted); flex: 1; }
+.meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.empty { color: var(--color-text-muted); font-size: var(--text-sm); }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }

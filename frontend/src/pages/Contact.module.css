@@ -1,0 +1,9 @@
+.grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-12); align-items: start; }
+.title { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-4); }
+.intro { color: var(--color-text-muted); max-width: 52ch; margin-bottom: var(--space-8); }
+.contactInfo { display: grid; gap: var(--space-5); }
+.infoRow { display: grid; gap: 2px; }
+.infoLabel { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.14em; color: var(--color-text-faint); font-weight: 600; }
+.infoValue { font-weight: 500; color: var(--color-primary); word-break: break-word; }
+.form { display: grid; gap: var(--space-5); }
+@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
