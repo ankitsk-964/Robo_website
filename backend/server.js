@@ -210,6 +210,11 @@ app.post("/api/admin/logout", requireAdmin, (req, res) => {
   });
 });
 
+// Session check — used by frontend to restore admin state on page refresh
+app.get("/api/admin/session", (req, res) => {
+  res.json({ isAdmin: req.session?.isAdmin === true });
+});
+
 app.get("/api/admin/clients", requireAdmin, asyncHandler(async (_req, res) => {
   const { rows } = await pool.query("SELECT id, name, industry, summary FROM clients ORDER BY id DESC");
   res.json(rows);
