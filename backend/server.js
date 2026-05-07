@@ -7,14 +7,13 @@ import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import pkg from "pg";
 import { z } from "zod";
-import path from "path";
-import { fileURLToPath } from "url";
+import connectPgSimple from "connect-pg-simple";
+
 
 dotenv.config();
 
 const { Pool } = pkg;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -54,16 +53,22 @@ app.use(cookieParser());
 app.use(express.json({ limit: "250kb" }));
 app.use(express.urlencoded({ extended: true, limit: "250kb" }));
 
+const PgSession = connectPgSimple(session);
 app.use(session({
-  name: "trbg.sid",
+  name:   "trbg.sid",
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  store: new PgSession({
+    pool,
+    tableName: "user_sessions",
+    createTableIfMissing: true,   // auto-creates the sessions table in Neon
+  }),
   cookie: {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 1000 * 60 * 60 * 8
+    sameSite: "none",             // required for cross-origin (Vercel ↔ Render)
+    secure:   true,               // required for sameSite: "none"
+    maxAge:   1000 * 60 * 60 * 8
   }
 }));
 
@@ -262,12 +267,10 @@ app.get("/api/admin/messages", requireAdmin, asyncHandler(async (_req, res) => {
   res.json(rows);
 }));
 
-app.use(express.static(path.join(__dirname, "..")));
-
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(__dirname, "..", "the-robo-battle-ground.html"));
+// ✅ ADD THIS instead — API-only 404
+app.use((_req, res) => {
+  res.status(404).json({ error: "Route not found" });
 });
-
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
