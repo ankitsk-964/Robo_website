@@ -9,6 +9,7 @@ import Internships from "./pages/Internships.jsx";
 import Contact from "./pages/Contact.jsx";
 import Admin from "./pages/Admin.jsx";
 
+
 export default function App() {
   return (
     <ThemeProvider>

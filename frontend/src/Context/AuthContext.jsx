@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
-
+ 
   useEffect(() => {
     fetch("/api/admin/me", { credentials: "include" })
       .then((r) => r.json())
