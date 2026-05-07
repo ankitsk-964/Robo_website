@@ -52,8 +52,8 @@ app.use(helmet({
 
 
 app.use(cors({
-  origin:      process.env.ALLOWED_ORIGIN,
-  credentials: true,               // allows cookies to be sent cross-origin
+  origin: "https://robo-website-alpha.vercel.app",
+  credentials: true   // ← allows cookies cross-origin
 }));
 
 app.use(cookieParser());
