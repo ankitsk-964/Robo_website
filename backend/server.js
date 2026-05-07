@@ -274,6 +274,97 @@ app.get("/api/admin/messages", requireAdmin, asyncHandler(async (_req, res) => {
   res.json(rows);
 }));
 
+
+// ── Admin: Careers ──────────────────────────────────────────
+app.get("/api/admin/careers", requireAdmin, asyncHandler(async (_req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, title, location, employment_type, experience_level, description, is_active
+     FROM career_openings ORDER BY id DESC`
+  );
+  res.json(rows);
+}));
+
+app.post("/api/admin/careers", requireAdmin, asyncHandler(async (req, res) => {
+  const schema = z.object({
+    title:            z.string().min(2).max(150),
+    location:         z.string().min(2).max(120),
+    employment_type:  z.string().min(2).max(80),
+    experience_level: z.string().min(2).max(80),
+    description:      z.string().min(5).max(3000),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
+
+  const { title, location, employment_type, experience_level, description } = parsed.data;
+  const { rows } = await pool.query(
+    `INSERT INTO career_openings (title, location, employment_type, experience_level, description)
+     VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+    [title, location, employment_type, experience_level, description]
+  );
+  res.status(201).json(rows[0]);
+}));
+
+app.delete("/api/admin/careers/:id", requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid id" });
+  await pool.query("DELETE FROM career_openings WHERE id = $1", [id]);
+  res.json({ ok: true });
+}));
+
+// ── Admin: Internships ───────────────────────────────────────
+app.get("/api/admin/internships", requireAdmin, asyncHandler(async (_req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, title, duration, mode, description, is_active
+     FROM internships ORDER BY id DESC`
+  );
+  res.json(rows);
+}));
+
+app.post("/api/admin/internships", requireAdmin, asyncHandler(async (req, res) => {
+  const schema = z.object({
+    title:       z.string().min(2).max(150),
+    duration:    z.string().min(2).max(80),
+    mode:        z.string().min(2).max(80),
+    description: z.string().min(5).max(3000),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
+
+  const { title, duration, mode, description } = parsed.data;
+  const { rows } = await pool.query(
+    `INSERT INTO internships (title, duration, mode, description)
+     VALUES ($1,$2,$3,$4) RETURNING *`,
+    [title, duration, mode, description]
+  );
+  res.status(201).json(rows[0]);
+}));
+
+app.delete("/api/admin/internships/:id", requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid id" });
+  await pool.query("DELETE FROM internships WHERE id = $1", [id]);
+  res.json({ ok: true });
+}));
+
+// ── Admin: Update application status ────────────────────────
+app.patch("/api/admin/applications/:id/status", requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid id" });
+
+  const schema = z.object({
+    status: z.enum(["new", "reviewing", "accepted", "rejected"])
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid status" });
+
+  await pool.query(
+    "UPDATE internship_applications SET status = $1 WHERE id = $2",
+    [parsed.data.status, id]
+  );
+  res.json({ ok: true });
+}));
+
+
 // ✅ ADD THIS instead — API-only 404
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found" });

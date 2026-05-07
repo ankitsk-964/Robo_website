@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch.js";
 import styles from "./Careers.module.css";
 
@@ -35,10 +36,12 @@ export default function Careers() {
                   <span className="tag">{job.experience}</span>
                 </div>
                 <p>{job.description}</p>
-                <a href="/contact" className="btn btn-secondary">Apply via contact</a>
+                <Link to="/contact" className="btn btn-secondary">Apply via contact</Link>
               </article>
             ))}
-            {!jobs?.length && <p className={styles.empty}>No openings at the moment. Check back soon.</p>}
+            {!jobs?.length && (
+              <p className={styles.empty}>No openings at the moment. Check back soon.</p>
+            )}
           </div>
         )}
       </div>

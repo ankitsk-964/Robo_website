@@ -1,8 +1,9 @@
+import { Link } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch.js";
 import styles from "./Home.module.css";
 
 export default function Home() {
-  const { data: clients } = useFetch("/api/public/clients");
+  const { data: clients, loading } = useFetch("/api/public/clients");
 
   return (
     <>
@@ -19,8 +20,8 @@ export default function Home() {
               embedded integrations, and engineering support for businesses, institutions, and innovation programs.
             </p>
             <div className={styles.heroActions}>
-              <a href="/contact" className="btn btn-primary">Talk to our team</a>
-              <a href="/internships" className="btn btn-secondary">Explore internships</a>
+              <Link to="/contact"     className="btn btn-primary">Talk to our team</Link>
+              <Link to="/internships" className="btn btn-secondary">Explore internships</Link>
             </div>
           </div>
 
@@ -59,9 +60,9 @@ export default function Home() {
           </div>
           <div className={styles.servicesGrid}>
             {[
-              { title: "Robotics Solutions", desc: "Design, integration, prototyping, and deployment of robotics systems for industrial, academic, and applied innovation." },
-              { title: "Hardware Solutions", desc: "Electronic hardware design support, embedded devices, controller boards, test setups, and engineering validation." },
-              { title: "Automation Support", desc: "Workflow automation, controls strategy, hardware-software interfacing, and operational optimization." },
+              { title: "Robotics Solutions",    desc: "Design, integration, prototyping, and deployment of robotics systems for industrial, academic, and applied innovation." },
+              { title: "Hardware Solutions",    desc: "Electronic hardware design support, embedded devices, controller boards, test setups, and engineering validation." },
+              { title: "Automation Support",    desc: "Workflow automation, controls strategy, hardware-software interfacing, and operational optimization." },
               { title: "Prototype Development", desc: "Rapid system mockups, proof-of-concept builds, lab validation, and demonstration-ready engineering assets." },
             ].map((s) => (
               <article key={s.title} className={`card fade-in ${styles.serviceCard}`}>
@@ -81,13 +82,25 @@ export default function Home() {
             <h2>Clients &amp; collaborators</h2>
           </div>
           <div className={styles.clientsGrid}>
-            {clients?.map((c) => (
-              <article key={c.id} className={`card fade-in ${styles.clientCard}`}>
-                <span className="tag">{c.industry}</span>
-                <h3>{c.name}</h3>
-                <p>{c.summary}</p>
-              </article>
-            ))}
+            {loading ? (
+              [1,2,3,4].map((i) => (
+                <div key={i} className="card">
+                  <div className="skeleton skeleton-text" style={{ width: "40%" }} />
+                  <div className="skeleton skeleton-heading" />
+                  <div className="skeleton skeleton-text" />
+                </div>
+              ))
+            ) : clients?.length ? (
+              clients.map((c) => (
+                <article key={c.id} className={`card fade-in ${styles.clientCard}`}>
+                  <span className="tag">{c.industry}</span>
+                  <h3>{c.name}</h3>
+                  <p>{c.summary}</p>
+                </article>
+              ))
+            ) : (
+              <p style={{ color: "var(--color-text-muted)" }}>No clients listed yet.</p>
+            )}
           </div>
         </div>
       </section>
