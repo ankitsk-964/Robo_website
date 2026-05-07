@@ -20,11 +20,14 @@ const app = express();
 const port = Number(process.env.PORT || 4000);
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT || 5432),
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    require:            true,
+    rejectUnauthorized: false,   // Neon uses Let's Encrypt — safe to leave false
+  },
+  max:                10,        // Neon free tier has a connection limit
+  idleTimeoutMillis:  30000,
+  connectionTimeoutMillis: 5000,
 });
 
 app.set("trust proxy", 1);
