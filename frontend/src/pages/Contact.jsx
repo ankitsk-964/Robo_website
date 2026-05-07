@@ -8,11 +8,21 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ msg: "Sending...", type: "" });
+
     const fd = new FormData(e.target);
+    const payload = Object.fromEntries(fd.entries());
+
+  
+    if (!payload.name?.trim() || !payload.email?.trim() || 
+        !payload.subject?.trim() || !payload.message?.trim()) {
+      setStatus({ msg: "Please fill in all fields.", type: "error" });
+      return;
+    }
+
     try {
-      await apiPost("/api/public/contact", Object.fromEntries(fd.entries()));
+      await apiPost("/api/public/contact", payload);
       e.target.reset();
-      setStatus({ msg: "Message sent successfully. We'll get back to you shortly.", type: "success" });
+      setStatus({ msg: "Message sent successfully!", type: "success" });
     } catch {
       setStatus({ msg: "Failed to send message. Please try again.", type: "error" });
     }

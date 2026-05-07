@@ -19,7 +19,7 @@ export default function Internships() {
     const fd = new FormData(e.target);
     const payload = Object.fromEntries(fd.entries());
     try {
-      await apiPost("/api/public/apply", payload);
+      await apiPost("/api/public/internships/apply", payload);
       e.target.reset();
       setSelectedTrack("");
       setStatus({ msg: "Application submitted successfully! We will get back to you soon.", type: "success" });
