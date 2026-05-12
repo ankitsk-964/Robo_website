@@ -1,13 +1,14 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
+const BASE = import.meta.env.VITE_API_BASE ?? "";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
- 
+
   useEffect(() => {
-    fetch("/api/admin/me", { credentials: "include" })
+    fetch(`${BASE}/api/admin/session`, { credentials: "include" }) // ✅ fixed endpoint + base URL
       .then((r) => r.json())
       .then((data) => setIsAdmin(data.isAdmin === true))
       .catch(() => setIsAdmin(false))
@@ -15,7 +16,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (username, password) => {
-    const res = await fetch("/api/admin/login", {
+    const res = await fetch(`${BASE}/api/admin/login`, { // ✅ base URL added
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -26,7 +27,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+    await fetch(`${BASE}/api/admin/logout`, { method: "POST", credentials: "include" }); // ✅ base URL added
     setIsAdmin(false);
   };
 
