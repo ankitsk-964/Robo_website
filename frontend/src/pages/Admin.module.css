@@ -1,10 +1,355 @@
-.checking { color: var(--color-text-muted); }
-.loginWrap { max-width: 480px; margin-inline: auto; }
-.title { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-3); }
-.toolbar { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); flex-wrap: wrap; }
-.tabContent { margin-top: var(--space-6); }
-.twoCol { display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--space-6); align-items: start; }
-.panelTitle { font-family: var(--font-display); font-size: var(--text-base); margin-bottom: var(--space-4); }
-.listGrid { display: grid; gap: var(--space-4); }
-.form { display: grid; gap: var(--space-4); }
-@media (max-width: 860px) { .twoCol { grid-template-columns: 1fr; } }
+/* Admin.module.css */
+
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  font-family: inherit;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+/* ── Login ── */
+.loginWrap {
+  max-width: 380px;
+  margin: 6rem auto;
+  padding: 2.5rem;
+  background: #1c2333;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.loginWrap h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 0.25rem;
+}
+
+.loginWrap p {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.loginWrap form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loginWrap input {
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.loginWrap input:focus {
+  border-color: #3b82f6;
+}
+
+.loginWrap button {
+  padding: 0.7rem;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.loginWrap button:hover {
+  background: #2563eb;
+}
+
+.error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.logoutBtn {
+  padding: 0.45rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+/* ── Maintenance Banner ── */
+.maintenanceBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.75rem;
+  border: 1px solid;
+}
+
+.maintenanceOn {
+  background: #2d1515;
+  border-color: #dc2626;
+}
+
+.maintenanceOff {
+  background: #122112;
+  border-color: #16a34a;
+}
+
+.maintenanceInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.maintenanceIcon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.maintenanceInfo strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #f1f5f9;
+  margin-bottom: 0.15rem;
+}
+
+.maintenanceInfo p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.btnTurnOn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btnTurnOn:hover {
+  background: #b91c1c;
+}
+
+.btnTurnOff {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btnTurnOff:hover {
+  background: #15803d;
+}
+
+.maintenanceToast {
+  width: 100%;
+  margin: 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 0.75rem;
+}
+
+.tab {
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: capitalize;
+}
+
+.tab:hover {
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+.activeTab {
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #3b82f6;
+  background: #1e3a5f;
+  color: #93c5fd;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* ── Section ── */
+.section h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 1.25rem;
+}
+
+.section form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: #111827;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+}
+
+.section input,
+.section textarea,
+.section select {
+  flex: 1 1 180px;
+  padding: 0.6rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.section textarea {
+  flex: 1 1 100%;
+  min-height: 80px;
+  resize: vertical;
+}
+
+.section input:focus,
+.section textarea:focus {
+  border-color: #3b82f6;
+}
+
+.section form button[type="submit"] {
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.section form button[type="submit"]:hover {
+  background: #2563eb;
+}
+
+/* ── Card ── */
+.card {
+  background: #111827;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.card strong {
+  color: #f1f5f9;
+  font-size: 0.95rem;
+}
+
+.card p {
+  margin: 0.4rem 0 0.75rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.card button {
+  padding: 0.35rem 0.875rem;
+  border-radius: 6px;
+  border: 1px solid #dc2626;
+  background: transparent;
+  color: #f87171;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card button:hover {
+  background: #dc2626;
+  color: #fff;
+}
+
+.card select {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
