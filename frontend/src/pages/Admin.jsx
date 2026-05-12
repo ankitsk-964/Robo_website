@@ -1,319 +1,309 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useFetch } from "../hooks/useFetch.js";
 import { apiPost, apiDelete, apiPatch } from "../utils/api.js";
 import styles from "./Admin.module.css";
+
+const BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export default function Admin() {
   const { isAdmin, checking, login, logout } = useAuth();
   const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState("clients");
 
-  if (checking) return <div className={`section container ${styles.checking}`}><p>Checking session...</p></div>;
+  // ── Maintenance Mode State ──────────────────────────────────
+  const [maintenance, setMaintenance] = useState(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [maintenanceMsg, setMaintenanceMsg] = useState("");
 
-  if (!isAdmin) return <AdminLogin onLogin={login} error={loginError} setError={setLoginError} />;
+  // Fetch current maintenance status when admin logs in
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch(`${BASE}/api/admin/maintenance`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => setMaintenance(d.maintenance ?? false))
+      .catch(() => {});
+  }, [isAdmin]);
 
-  return (
-    <section className="section">
-      <div className="container">
-        <div className={styles.toolbar}>
-          <div>
-            <p className="eyebrow">Operations</p>
-            <h1 className={styles.title}>Admin panel</h1>
-          </div>
-          <button className="btn btn-secondary" onClick={logout}>Logout</button>
-        </div>
-
-        <div className="tabs" role="tablist">
-          {["clients","careers","internships","applications","messages"].map((tab) => (
-            <button
-              key={tab}
-              className={`tab-btn ${activeTab === tab ? "active" : ""}`}
-              role="tab"
-              aria-selected={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.tabContent}>
-          {activeTab === "clients"      && <ClientsTab />}
-          {activeTab === "careers"      && <CareersTab />}
-          {activeTab === "internships"  && <InternshipsTab />}
-          {activeTab === "applications" && <ApplicationsTab />}
-          {activeTab === "messages"     && <MessagesTab />}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AdminLogin({ onLogin, error, setError }) {
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const toggleMaintenance = async () => {
+    setMaintenanceLoading(true);
+    setMaintenanceMsg("");
     try {
-      await onLogin(e.target.username.value, e.target.password.value);
-    } catch {
-      setError("Invalid username or password.");
+      const res = await fetch(`${BASE}/api/admin/maintenance`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maintenance: !maintenance }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setMaintenance(data.maintenance);
+      setMaintenanceMsg(
+        data.maintenance
+          ? "✅ Maintenance mode ON — visitors now see the maintenance page."
+          : "✅ Maintenance mode OFF — site is live."
+      );
+    } catch (err) {
+      setMaintenanceMsg("❌ " + err.message);
+    } finally {
+      setMaintenanceLoading(false);
+      setTimeout(() => setMaintenanceMsg(""), 4000);
     }
   };
+  // ────────────────────────────────────────────────────────────
+
+  // Existing data hooks
+  const { data: clients, refetch: refetchClients } = useFetch(`${BASE}/api/admin/clients`);
+  const { data: careers, refetch: refetchCareers } = useFetch(`${BASE}/api/admin/careers`);
+  const { data: internships, refetch: refetchInternships } = useFetch(`${BASE}/api/admin/internships`);
+  const { data: apps, refetch: refetchApps } = useFetch(`${BASE}/api/admin/applications`);
+  const { data: messages } = useFetch(`${BASE}/api/admin/messages`);
+
+  if (checking) return <div className={styles.loading}>Checking session...</div>;
+
+  if (!isAdmin) {
+    return (
+      <div className={styles.loginWrap}>
+        <h2>Operations</h2>
+        <p>Restricted area</p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setLoginError("");
+            const fd = new FormData(e.target);
+            try {
+              await login(fd.get("username"), fd.get("password"));
+            } catch {
+              setLoginError("Invalid username or password.");
+            }
+          }}
+        >
+          <input name="username" placeholder="Username" autoComplete="username" required />
+          <input name="password" type="password" placeholder="Password" autoComplete="current-password" required />
+          {loginError && <p className={styles.error}>{loginError}</p>}
+          <button type="submit">Login</button>
+        </form>
+      </div>
+    );
+  }
 
   return (
-    <section className="section">
-      <div className={`container ${styles.loginWrap}`}>
-        <div className="form-card">
-          <p className="eyebrow">Restricted area</p>
-          <h1 className={styles.title}>Admin login</h1>
-          <form onSubmit={handleSubmit} noValidate className={styles.form}>
-            <div className="field">
-              <label htmlFor="username">Username</label>
-              <input id="username" name="username" type="text" required autoComplete="username" />
-            </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input id="password" name="password" type="password" required autoComplete="current-password" />
-            </div>
-            <button type="submit" className="btn btn-primary">Sign in</button>
-            {error && <p className="form-status error">{error}</p>}
+    <div className={styles.wrap}>
+      <header className={styles.header}>
+        <h1>Admin Panel</h1>
+        <button onClick={logout} className={styles.logoutBtn}>Logout</button>
+      </header>
+
+      {/* ── Maintenance Mode Banner ── */}
+      <div className={`${styles.maintenanceBanner} ${maintenance ? styles.maintenanceOn : styles.maintenanceOff}`}>
+        <div className={styles.maintenanceInfo}>
+          <span className={styles.maintenanceIcon}>{maintenance ? "🔧" : "🟢"}</span>
+          <div>
+            <strong>{maintenance ? "Maintenance Mode is ON" : "Site is Live"}</strong>
+            <p>
+              {maintenance
+                ? "Visitors are seeing the maintenance page. Only admins can access the site."
+                : "Your site is fully accessible to all visitors."}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={toggleMaintenance}
+          disabled={maintenanceLoading}
+          className={maintenance ? styles.btnTurnOff : styles.btnTurnOn}
+        >
+          {maintenanceLoading
+            ? "Updating..."
+            : maintenance
+            ? "Turn Off Maintenance"
+            : "Enable Maintenance Mode"}
+        </button>
+        {maintenanceMsg && <p className={styles.maintenanceToast}>{maintenanceMsg}</p>}
+      </div>
+
+      {/* ── Tabs ── */}
+      <nav className={styles.tabs}>
+        {["clients", "careers", "internships", "applications", "messages"].map((tab) => (
+          <button
+            key={tab}
+            className={activeTab === tab ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </nav>
+
+      {/* ── Clients Tab ── */}
+      {activeTab === "clients" && (
+        <section className={styles.section}>
+          <h2>Clients</h2>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              await apiPost(`/api/admin/clients`, {
+                name: fd.get("name"),
+                industry: fd.get("industry"),
+                summary: fd.get("summary"),
+              });
+              e.target.reset();
+              refetchClients();
+            }}
+          >
+            <input name="name" placeholder="Client name" required />
+            <input name="industry" placeholder="Industry" required />
+            <textarea name="summary" placeholder="Summary" required />
+            <button type="submit">Add Client</button>
           </form>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ClientsTab() {
-  const { data: clients, loading, refetch } = useFetch("/api/admin/clients");
-  const [status, setStatus] = useState("");
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    try {
-      await apiPost("/api/admin/clients", Object.fromEntries(fd.entries()));
-      e.target.reset(); setStatus("Client saved."); refetch();
-    } catch { setStatus("Save failed."); }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this client?")) return;
-    try { await apiDelete(`/api/admin/clients/${id}`); refetch(); }
-    catch { alert("Delete failed."); }
-  };
-
-  return (
-    <div className={styles.twoCol}>
-      <div className="form-card">
-        <h2 className={styles.panelTitle}>Add client</h2>
-        <form onSubmit={handleSubmit} className={styles.form} noValidate>
-          <div className="field"><label>Client name</label><input name="name" required /></div>
-          <div className="field"><label>Industry</label><input name="industry" required /></div>
-          <div className="field"><label>Summary</label><textarea name="summary" rows={4} required /></div>
-          <button className="btn btn-primary" type="submit">Save client</button>
-          <p className="form-status">{status}</p>
-        </form>
-      </div>
-      <div>
-        <h2 className={styles.panelTitle}>Client records</h2>
-        <div className={styles.listGrid}>
-          {loading ? <p>Loading...</p> : clients?.map((c) => (
-            <div key={c.id} className="list-item">
-              <div className="list-item-header">
-                <strong>{c.name}</strong>
-                <div className="inline-actions">
-                  <button className="btn btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
-                </div>
+          {!clients ? (
+            <p>Loading...</p>
+          ) : (
+            clients.map((c) => (
+              <div key={c.id} className={styles.card}>
+                <strong>{c.name}</strong> — {c.industry}
+                <p>{c.summary}</p>
+                <button onClick={async () => { await apiDelete(`/api/admin/clients/${c.id}`); refetchClients(); }}>
+                  Delete
+                </button>
               </div>
-              <span className="tag">{c.industry}</span>
-              <p style={{ fontSize: "var(--text-sm)", color: "var(--color-text-muted)" }}>{c.summary}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+            ))
+          )}
+        </section>
+      )}
 
-function CareersTab() {
-  const { data: careers, loading, refetch } = useFetch("/api/admin/careers");
-  const [status, setStatus] = useState("");
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    try {
-      await apiPost("/api/admin/careers", Object.fromEntries(fd.entries()));
-      e.target.reset(); setStatus("Career opening saved."); refetch();
-    } catch { setStatus("Save failed."); }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this opening?")) return;
-    try { await apiDelete(`/api/admin/careers/${id}`); refetch(); }
-    catch { alert("Delete failed."); }
-  };
-
-  return (
-    <div className={styles.twoCol}>
-      <div className="form-card">
-        <h2 className={styles.panelTitle}>Add opening</h2>
-        <form onSubmit={handleSubmit} className={styles.form} noValidate>
-          <div className="field"><label>Job title</label><input name="title" required /></div>
-          <div className="field"><label>Location</label><input name="location" required /></div>
-          <div className="field"><label>Employment type</label><input name="employment_type" required placeholder="Full-time, Part-time..." /></div>
-          <div className="field"><label>Experience level</label><input name="experience_level" required placeholder="1+ years, Fresher..." /></div>
-          <div className="field"><label>Description</label><textarea name="description" rows={4} required /></div>
-          <button className="btn btn-primary" type="submit">Save opening</button>
-          <p className="form-status">{status}</p>
-        </form>
-      </div>
-      <div>
-        <h2 className={styles.panelTitle}>Current openings</h2>
-        <div className={styles.listGrid}>
-          {loading ? <p>Loading...</p> : careers?.map((c) => (
-            <div key={c.id} className="list-item">
-              <div className="list-item-header">
-                <strong>{c.title}</strong>
-                <button className="btn btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
+      {/* ── Careers Tab ── */}
+      {activeTab === "careers" && (
+        <section className={styles.section}>
+          <h2>Careers</h2>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              await apiPost(`/api/admin/careers`, {
+                title: fd.get("title"),
+                location: fd.get("location"),
+                employment_type: fd.get("employment_type"),
+                experience_level: fd.get("experience_level"),
+                description: fd.get("description"),
+              });
+              e.target.reset();
+              refetchCareers();
+            }}
+          >
+            <input name="title" placeholder="Job title" required />
+            <input name="location" placeholder="Location" required />
+            <input name="employment_type" placeholder="Employment type (e.g. Full-time)" required />
+            <input name="experience_level" placeholder="Experience level (e.g. Mid-level)" required />
+            <textarea name="description" placeholder="Description" required />
+            <button type="submit">Add Career</button>
+          </form>
+          {!careers ? (
+            <p>Loading...</p>
+          ) : (
+            careers.map((c) => (
+              <div key={c.id} className={styles.card}>
+                <strong>{c.title}</strong> — {c.location}
+                <p>{c.description}</p>
+                <button onClick={async () => { await apiDelete(`/api/admin/careers/${c.id}`); refetchCareers(); }}>
+                  Delete
+                </button>
               </div>
-              <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
-                <span className="tag">{c.location}</span>
-                <span className="tag">{c.employment_type}</span>
+            ))
+          )}
+        </section>
+      )}
+
+      {/* ── Internships Tab ── */}
+      {activeTab === "internships" && (
+        <section className={styles.section}>
+          <h2>Internships</h2>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              await apiPost(`/api/admin/internships`, {
+                title: fd.get("title"),
+                duration: fd.get("duration"),
+                mode: fd.get("mode"),
+                description: fd.get("description"),
+              });
+              e.target.reset();
+              refetchInternships();
+            }}
+          >
+            <input name="title" placeholder="Internship title" required />
+            <input name="duration" placeholder="Duration (e.g. 3 months)" required />
+            <input name="mode" placeholder="Mode (e.g. Remote)" required />
+            <textarea name="description" placeholder="Description" required />
+            <button type="submit">Add Internship</button>
+          </form>
+          {!internships ? (
+            <p>Loading...</p>
+          ) : (
+            internships.map((i) => (
+              <div key={i.id} className={styles.card}>
+                <strong>{i.title}</strong> — {i.mode} · {i.duration}
+                <p>{i.description}</p>
+                <button onClick={async () => { await apiDelete(`/api/admin/internships/${i.id}`); refetchInternships(); }}>
+                  Delete
+                </button>
               </div>
-              <p style={{ fontSize:"var(--text-sm)", color:"var(--color-text-muted)" }}>{c.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+            ))
+          )}
+        </section>
+      )}
 
-function InternshipsTab() {
-  const { data: internships, loading, refetch } = useFetch("/api/admin/internships");
-  const [status, setStatus] = useState("");
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    try {
-      await apiPost("/api/admin/internships", Object.fromEntries(fd.entries()));
-      e.target.reset(); setStatus("Internship track saved."); refetch();
-    } catch { setStatus("Save failed."); }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this internship track?")) return;
-    try { await apiDelete(`/api/admin/internships/${id}`); refetch(); }
-    catch { alert("Delete failed."); }
-  };
-
-  return (
-    <div className={styles.twoCol}>
-      <div className="form-card">
-        <h2 className={styles.panelTitle}>Add internship track</h2>
-        <form onSubmit={handleSubmit} className={styles.form} noValidate>
-          <div className="field"><label>Track title</label><input name="title" required /></div>
-          <div className="field"><label>Duration</label><input name="duration" required placeholder="8-12 weeks" /></div>
-          <div className="field"><label>Mode</label><input name="mode" required placeholder="On-site / Hybrid" /></div>
-          <div className="field"><label>Description</label><textarea name="description" rows={4} required /></div>
-          <button className="btn btn-primary" type="submit">Save track</button>
-          <p className="form-status">{status}</p>
-        </form>
-      </div>
-      <div>
-        <h2 className={styles.panelTitle}>Internship tracks</h2>
-        <div className={styles.listGrid}>
-          {loading ? <p>Loading...</p> : internships?.map((i) => (
-            <div key={i.id} className="list-item">
-              <div className="list-item-header">
-                <strong>{i.title}</strong>
-                <button className="btn btn-danger" onClick={() => handleDelete(i.id)}>Delete</button>
+      {/* ── Applications Tab ── */}
+      {activeTab === "applications" && (
+        <section className={styles.section}>
+          <h2>Internship Applications</h2>
+          {!apps ? (
+            <p>Loading...</p>
+          ) : !apps.length ? (
+            <p>No applications yet.</p>
+          ) : (
+            apps.map((a) => (
+              <div key={a.id} className={styles.card}>
+                {Object.entries(a).map(([k, v]) => (
+                  <p key={k}><strong>{k}:</strong> {String(v)}</p>
+                ))}
+                <select
+                  value={a.status}
+                  onChange={async (e) => {
+                    await apiPatch(`/api/admin/applications/${a.id}/status`, { status: e.target.value });
+                    refetchApps();
+                  }}
+                >
+                  {["new", "reviewing", "accepted", "rejected"].map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
-              <div style={{ display:"flex", gap:"8px" }}>
-                <span className="tag">{i.duration}</span>
-                <span className="tag">{i.mode}</span>
+            ))
+          )}
+        </section>
+      )}
+
+      {/* ── Messages Tab ── */}
+      {activeTab === "messages" && (
+        <section className={styles.section}>
+          <h2>Contact Messages</h2>
+          {!messages ? (
+            <p>Loading...</p>
+          ) : !messages.length ? (
+            <p>No messages yet.</p>
+          ) : (
+            messages.map((m) => (
+              <div key={m.id} className={styles.card}>
+                <p><strong>Email:</strong> {m.email}</p>
+                <p><strong>Message:</strong> {m.message}</p>
+                <p>{new Date(m.created_at).toLocaleString("en-IN")}</p>
               </div>
-              <p style={{ fontSize:"var(--text-sm)", color:"var(--color-text-muted)" }}>{i.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ApplicationsTab() {
-  const { data: apps, loading, refetch } = useFetch("/api/admin/applications");
-
-  const updateStatus = async (id, status) => {
-    try { await apiPatch(`/api/admin/applications/${id}/status`, { status }); refetch(); }
-    catch { alert("Update failed."); }
-  };
-
-  const statusColors = { new: "", reviewing: "tag-warning", accepted: "tag-success", rejected: "tag-error" };
-
-  return (
-    <div>
-      <h2 className={styles.panelTitle}>Internship applications ({apps?.length || 0})</h2>
-      <div className={styles.listGrid}>
-        {loading ? <p>Loading...</p> : !apps?.length ? <p style={{ color:"var(--color-text-muted)" }}>No applications yet.</p> : apps.map((a) => (
-          <div key={a.id} className="list-item">
-            <div className="list-item-header">
-              <strong>{a.student_name}</strong>
-              <div className="inline-actions">
-                <span className={`tag ${statusColors[a.status] || ""}`}>{a.status}</span>
-                {a.status === "new" && <button className="btn btn-secondary" style={{ fontSize:"var(--text-xs)", minHeight:"36px", padding:"0.5rem 0.8rem" }} onClick={() => updateStatus(a.id, "reviewing")}>Review</button>}
-                {a.status === "reviewing" && (
-                  <>
-                    <button className="btn btn-primary" style={{ fontSize:"var(--text-xs)", minHeight:"36px" }} onClick={() => updateStatus(a.id, "accepted")}>Accept</button>
-                    <button className="btn btn-danger" style={{ fontSize:"var(--text-xs)", minHeight:"36px" }} onClick={() => updateStatus(a.id, "rejected")}>Reject</button>
-                  </>
-                )}
-              </div>
-            </div>
-            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
-              <span className="tag">{a.internship_track}</span>
-              <span className="tag">{a.student_college}</span>
-            </div>
-            <div className="list-item-body">
-              {[["Email", a.student_email], ["Phone", a.student_phone], ["Degree", a.student_degree], ["Skills", a.student_skills || "—"], ["Statement", a.student_statement]].map(([k, v]) => (
-                <p key={k}><strong>{k}:</strong> {v}</p>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MessagesTab() {
-  const { data: messages, loading } = useFetch("/api/admin/messages");
-
-  return (
-    <div>
-      <h2 className={styles.panelTitle}>Contact messages ({messages?.length || 0})</h2>
-      <div className={styles.listGrid}>
-        {loading ? <p>Loading...</p> : !messages?.length ? <p style={{ color:"var(--color-text-muted)" }}>No messages yet.</p> : messages.map((m) => (
-          <div key={m.id} className="list-item">
-            <div className="list-item-header">
-              <strong>{m.name}</strong>
-              <span className="tag">{m.subject}</span>
-            </div>
-            <div className="list-item-body">
-              <p><strong>Email:</strong> {m.email}</p>
-              <p><strong>Message:</strong> {m.message}</p>
-              <p style={{ fontSize:"var(--text-xs)", color:"var(--color-text-faint)", marginTop:"8px" }}>
-                {new Date(m.created_at).toLocaleString("en-IN")}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+            ))
+          )}
+        </section>
+      )}
     </div>
   );
 }
