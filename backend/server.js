@@ -53,7 +53,11 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: "https://robo-website-alpha.vercel.app",
+  origin: [
+    "https://therobobattleground.in",       // apex domain
+    "https://www.therobobattleground.in",   // www
+    "https://robo-website-alpha.vercel.app" // old Vercel URL (keep during transition)
+  ],
   credentials: true
 }));
 
