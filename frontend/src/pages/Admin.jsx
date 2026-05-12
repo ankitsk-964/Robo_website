@@ -11,12 +11,11 @@ export default function Admin() {
   const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState("clients");
 
-  // ── Maintenance Mode State ──────────────────────────────────
+  // ── Maintenance Mode ──────────────────────────────────────
   const [maintenance, setMaintenance] = useState(false);
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [maintenanceMsg, setMaintenanceMsg] = useState("");
 
-  // Fetch current maintenance status when admin logs in
   useEffect(() => {
     if (!isAdmin) return;
     fetch(`${BASE}/api/admin/maintenance`, { credentials: "include" })
@@ -50,9 +49,9 @@ export default function Admin() {
       setTimeout(() => setMaintenanceMsg(""), 4000);
     }
   };
-  // ────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────
 
-  // Existing data hooks
+  // Data hooks — all using BASE so they hit Render, not Vercel
   const { data: clients, refetch: refetchClients } = useFetch(`${BASE}/api/admin/clients`);
   const { data: careers, refetch: refetchCareers } = useFetch(`${BASE}/api/admin/careers`);
   const { data: internships, refetch: refetchInternships } = useFetch(`${BASE}/api/admin/internships`);
@@ -94,15 +93,28 @@ export default function Admin() {
         <button onClick={logout} className={styles.logoutBtn}>Logout</button>
       </header>
 
-      {/* ── Maintenance Mode Banner ── */}
-      <div className={`${styles.maintenanceBanner} ${maintenance ? styles.maintenanceOn : styles.maintenanceOff}`}>
-        <div className={styles.maintenanceInfo}>
-          <span className={styles.maintenanceIcon}>{maintenance ? "🔧" : "🟢"}</span>
+      {/* ── Maintenance Toggle Banner ── */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "0.75rem",
+        padding: "0.875rem 1.25rem",
+        marginBottom: "1.5rem",
+        borderRadius: "8px",
+        border: `1px solid ${maintenance ? "#dc2626" : "#16a34a"}`,
+        background: maintenance ? "#2d1515" : "#122112",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <span style={{ fontSize: "1.4rem" }}>{maintenance ? "🔧" : "🟢"}</span>
           <div>
-            <strong>{maintenance ? "Maintenance Mode is ON" : "Site is Live"}</strong>
-            <p>
+            <strong style={{ color: "#f1f5f9", fontSize: "0.9rem" }}>
+              {maintenance ? "Maintenance Mode is ON" : "Site is Live"}
+            </strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "#94a3b8" }}>
               {maintenance
-                ? "Visitors are seeing the maintenance page. Only admins can access the site."
+                ? "Visitors are seeing the maintenance page."
                 : "Your site is fully accessible to all visitors."}
             </p>
           </div>
@@ -110,15 +122,25 @@ export default function Admin() {
         <button
           onClick={toggleMaintenance}
           disabled={maintenanceLoading}
-          className={maintenance ? styles.btnTurnOff : styles.btnTurnOn}
+          style={{
+            padding: "0.45rem 1.1rem",
+            borderRadius: "6px",
+            border: "none",
+            fontWeight: 600,
+            fontSize: "0.85rem",
+            cursor: "pointer",
+            background: maintenance ? "#16a34a" : "#dc2626",
+            color: "#fff",
+            opacity: maintenanceLoading ? 0.6 : 1,
+          }}
         >
-          {maintenanceLoading
-            ? "Updating..."
-            : maintenance
-            ? "Turn Off Maintenance"
-            : "Enable Maintenance Mode"}
+          {maintenanceLoading ? "Updating..." : maintenance ? "Turn Off Maintenance" : "Enable Maintenance Mode"}
         </button>
-        {maintenanceMsg && <p className={styles.maintenanceToast}>{maintenanceMsg}</p>}
+        {maintenanceMsg && (
+          <p style={{ width: "100%", margin: 0, fontSize: "0.82rem", color: "#94a3b8" }}>
+            {maintenanceMsg}
+          </p>
+        )}
       </div>
 
       {/* ── Tabs ── */}
@@ -142,7 +164,7 @@ export default function Admin() {
             onSubmit={async (e) => {
               e.preventDefault();
               const fd = new FormData(e.target);
-              await apiPost(`/api/admin/clients`, {
+              await apiPost(`${BASE}/api/admin/clients`, {
                 name: fd.get("name"),
                 industry: fd.get("industry"),
                 summary: fd.get("summary"),
@@ -163,7 +185,7 @@ export default function Admin() {
               <div key={c.id} className={styles.card}>
                 <strong>{c.name}</strong> — {c.industry}
                 <p>{c.summary}</p>
-                <button onClick={async () => { await apiDelete(`/api/admin/clients/${c.id}`); refetchClients(); }}>
+                <button onClick={async () => { await apiDelete(`${BASE}/api/admin/clients/${c.id}`); refetchClients(); }}>
                   Delete
                 </button>
               </div>
@@ -180,7 +202,7 @@ export default function Admin() {
             onSubmit={async (e) => {
               e.preventDefault();
               const fd = new FormData(e.target);
-              await apiPost(`/api/admin/careers`, {
+              await apiPost(`${BASE}/api/admin/careers`, {
                 title: fd.get("title"),
                 location: fd.get("location"),
                 employment_type: fd.get("employment_type"),
@@ -205,7 +227,7 @@ export default function Admin() {
               <div key={c.id} className={styles.card}>
                 <strong>{c.title}</strong> — {c.location}
                 <p>{c.description}</p>
-                <button onClick={async () => { await apiDelete(`/api/admin/careers/${c.id}`); refetchCareers(); }}>
+                <button onClick={async () => { await apiDelete(`${BASE}/api/admin/careers/${c.id}`); refetchCareers(); }}>
                   Delete
                 </button>
               </div>
@@ -222,7 +244,7 @@ export default function Admin() {
             onSubmit={async (e) => {
               e.preventDefault();
               const fd = new FormData(e.target);
-              await apiPost(`/api/admin/internships`, {
+              await apiPost(`${BASE}/api/admin/internships`, {
                 title: fd.get("title"),
                 duration: fd.get("duration"),
                 mode: fd.get("mode"),
@@ -245,7 +267,7 @@ export default function Admin() {
               <div key={i.id} className={styles.card}>
                 <strong>{i.title}</strong> — {i.mode} · {i.duration}
                 <p>{i.description}</p>
-                <button onClick={async () => { await apiDelete(`/api/admin/internships/${i.id}`); refetchInternships(); }}>
+                <button onClick={async () => { await apiDelete(`${BASE}/api/admin/internships/${i.id}`); refetchInternships(); }}>
                   Delete
                 </button>
               </div>
@@ -271,7 +293,7 @@ export default function Admin() {
                 <select
                   value={a.status}
                   onChange={async (e) => {
-                    await apiPatch(`/api/admin/applications/${a.id}/status`, { status: e.target.value });
+                    await apiPatch(`${BASE}/api/admin/applications/${a.id}/status`, { status: e.target.value });
                     refetchApps();
                   }}
                 >
