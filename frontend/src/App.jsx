@@ -31,20 +31,46 @@ function useMaintenance() {
 export default function App() {
   const { maintenance, checked } = useMaintenance();
 
-  // Only show maintenance page AFTER we've confirmed it's ON
-  // If not yet checked or maintenance is OFF — show site normally
-  if (checked && maintenance) return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Routes>
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<Maintenance />} />
-        </Routes>
-      </AuthProvider>
-    </ThemeProvider>
-  );
+  // ✅ Show a blank/spinner until we know maintenance status
+  // This prevents the normal site flashing before maintenance page appears
+  if (!checked) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        background: "#0d1b2a", // match your site's background color
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
+        {/* Optional: small spinner */}
+        <div style={{
+          width: "32px",
+          height: "32px",
+          border: "3px solid #1e3a5f",
+          borderTop: "3px solid #4f98a3",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite"
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
-  // Render site immediately — no blank wait
+  // Maintenance is confirmed ON
+  if (maintenance) {
+    return (
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<Maintenance />} />
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Normal site
   return (
     <ThemeProvider>
       <AuthProvider>
