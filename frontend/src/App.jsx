@@ -31,25 +31,20 @@ function useMaintenance() {
 export default function App() {
   const { maintenance, checked } = useMaintenance();
 
-  // Wait for maintenance check before rendering anything (prevents flicker)
-  if (!checked) return null;
+  // Only show maintenance page AFTER we've confirmed it's ON
+  // If not yet checked or maintenance is OFF — show site normally
+  if (checked && maintenance) return (
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<Maintenance />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 
-  // If maintenance is ON, show maintenance page to everyone except /admin
-  // Admin route is always accessible so you can turn it back off
-  if (maintenance) {
-    return (
-      <ThemeProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/admin" element={<Admin />} />
-            <Route path="*" element={<Maintenance />} />
-          </Routes>
-        </AuthProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Normal site
+  // Render site immediately — no blank wait
   return (
     <ThemeProvider>
       <AuthProvider>
