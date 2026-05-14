@@ -167,6 +167,8 @@ app.get("/api/public/clients", asyncHandler(async (_req, res) => {
   );
   res.json(rows);
 }));
+// Health check — used by cron-job to keep server alive
+app.get("/health", (_req, res) => res.status(200).send("OK"));
 
 app.get("/api/public/careers", asyncHandler(async (_req, res) => {
   const { rows } = await pool.query(
